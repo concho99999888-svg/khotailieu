@@ -1,0 +1,196 @@
+.topbar {
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.logo {
+  min-width: auto;
+  width: 100%;
+  font-size: 21px;
+}
+
+.search-wrap,
+.site-stats {
+  width: 100%;
+}
+
+.site-stats {
+  text-align: center;
+}
+
+.hero {
+  padding: 18px 14px 8px;
+}
+
+.hero-box {
+  padding: 24px 18px;
+}
+
+.hero-box h1 {
+  font-size: 24px;
+}
+
+.filter-bar {
+  padding: 14px;
+  gap: 8px;
+}
+
+.filter-btn {
+  flex: 1;
+  min-width: 92px;
+  padding: 10px 12px;
+}
+
+.layout {
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 14px 18px;
+}
+
+.sidebar {
+  width: 100%;
+  position: static;
+}
+
+.category-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.category-btn {
+  min-height: 42px;
+  text-align: center;
+  padding: 10px;
+}
+
+.donate-card {
+  grid-template-columns: 1fr;
+}
+
+.donate-qr {
+  width: min(210px, 100%);
+}
+
+.document-grid {
+  grid-template-columns: 1fr;
+}
+
+.content-head {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.modal {
+  align-items: flex-end;
+  padding: 8px;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: none;
+  max-height: 92vh;
+  overflow: auto;
+  padding: 22px 14px 16px;
+  border-radius: 8px 8px 0 0;
+}
+
+.close-modal {
+  top: 8px;
+  right: 10px;
+}
+
+.preview-icon {
+  font-size: 42px;
+  margin-bottom: 6px;
+}
+
+.modal-box h3 {
+  padding-right: 44px;
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.preview-meta {
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.preview-meta span {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.preview-layout {
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.file-preview-panel {
+  min-height: 360px;
+}
+
+.file-preview-frame {
+  height: min(52vh, 440px);
+}
+
+.file-preview-head {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  padding: 10px 12px;
+}
+
+.file-preview-count {
+  margin-left: 0;
+}
+
+.file-preview-empty {
+  min-height: 360px;
+  padding: 20px 14px;
+}
+
+.file-list {
+  max-height: none;
+  padding-right: 0;
+}
+
+.file-list-head {
+  font-size: 17px;
+}
+
+.file-item {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  gap: 10px;
+  padding: 12px;
+}
+
+.file-item-left {
+  gap: 9px;
+}
+
+.file-item-name {
+  font-size: 15px;
+}
+
+.file-item-path {
+  font-size: 11px;
+}
+
+.file-item-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+}
+
+.mini-btn {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 8px;
+}
+
+.footer {
+  flex-direction: column;
+  padding: 18px 14px;
+}

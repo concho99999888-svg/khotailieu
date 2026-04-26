@@ -31,46 +31,10 @@
   font-size: 24px;
 }
 
-.filter-bar {
-  padding: 14px;
-  gap: 8px;
-}
-
-.filter-btn {
-  flex: 1;
-  min-width: 92px;
-  padding: 10px 12px;
-}
-
 .layout {
   flex-direction: column;
   gap: 16px;
   padding: 0 14px 18px;
-}
-
-.sidebar {
-  width: 100%;
-  position: static;
-}
-
-.category-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.category-btn {
-  min-height: 42px;
-  text-align: center;
-  padding: 10px;
-}
-
-.donate-card {
-  grid-template-columns: 1fr;
-}
-
-.donate-qr {
-  width: min(210px, 100%);
 }
 
 .document-grid {
@@ -136,6 +100,22 @@
   height: min(52vh, 440px);
 }
 
+.file-preview-image-wrap {
+  min-height: 360px;
+}
+
+.file-preview-image {
+  max-height: min(48vh, 400px);
+}
+
+.file-preview-video-wrap {
+  min-height: 360px;
+}
+
+.file-preview-video {
+  max-height: min(48vh, 400px);
+}
+
 .file-preview-head {
   flex-wrap: wrap;
   align-items: flex-start;
@@ -144,6 +124,15 @@
 
 .file-preview-count {
   margin-left: 0;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.file-preview-count .visitor-count,
+.file-item-clicks .visitor-count,
+.file-preview-count .visitor-badge,
+.file-item-clicks .visitor-badge {
+  max-width: 100%;
 }
 
 .file-preview-empty {

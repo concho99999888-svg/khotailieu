@@ -34,41 +34,18 @@
   }
 }
 
-@keyframes qr-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.025);
-  }
-}
-
 .topbar {
   animation: slide-down 0.45s ease both;
 }
 
 .hero-box,
-.filter-bar,
-.sidebar-panel,
-.donate-card,
 .content-head,
 .empty-box {
   animation: fade-up 0.5s ease both;
 }
 
-.filter-bar {
-  animation-delay: 0.08s;
-}
-
-.sidebar-panel,
 .content-head {
   animation-delay: 0.12s;
-}
-
-.donate-card {
-  animation-delay: 0.18s;
 }
 
 .doc-card {
@@ -85,8 +62,6 @@
   transform: translateY(-5px);
 }
 
-.filter-btn,
-.category-btn,
 .doc-btn,
 .mini-btn,
 .file-item,
@@ -101,8 +76,6 @@
     transform 0.2s ease;
 }
 
-.filter-btn:hover,
-.category-btn:hover,
 .doc-btn:hover,
 .mini-btn:hover,
 .file-item:hover,
@@ -118,10 +91,6 @@
 .search-wrap input:focus {
   border-color: #1565c0;
   box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.14);
-}
-
-.donate-qr {
-  animation: qr-breathe 3.2s ease-in-out infinite;
 }
 
 .modal.show .modal-box {

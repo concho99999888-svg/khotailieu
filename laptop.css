@@ -1,7 +1,6 @@
 @media (min-width: 1101px) {
   .layout,
   .hero,
-  .filter-bar,
   .footer {
     max-width: 1280px;
     margin-left: auto;
@@ -32,25 +31,6 @@
 
   .layout {
     flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    position: static;
-  }
-
-  .category-list {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .donate-card {
-    grid-template-columns: 1fr auto;
-    align-items: center;
-  }
-
-  .donate-qr {
-    width: 140px;
   }
 
   .preview-layout {

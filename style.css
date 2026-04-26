@@ -68,6 +68,54 @@ button {
   white-space: nowrap;
 }
 
+.visitor-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 5px 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #f8fbff;
+  color: #0f5db8;
+  box-shadow: 0 2px 8px rgba(21, 101, 192, 0.08);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.visitor-count.is-loading {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.visitor-badge {
+  display: block;
+  max-width: 100%;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(21, 101, 192, 0.08);
+}
+
+.site-stats .visitor-count {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.site-stats .visitor-badge {
+  margin: 0 auto;
+}
+
 .hero {
   padding: 24px 20px 10px;
 }
@@ -89,105 +137,11 @@ button {
   opacity: 0.95;
 }
 
-.filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 16px 20px;
-}
-
-.filter-btn {
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: #e8edf5;
-  color: #334155;
-  font-weight: 600;
-}
-
-.filter-btn.active {
-  background: #1565c0;
-  color: #fff;
-}
-
 .layout {
   display: flex;
   gap: 20px;
   padding: 0 20px 20px;
   align-items: flex-start;
-}
-
-.sidebar {
-  width: 260px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  position: sticky;
-  top: 88px;
-}
-
-.sidebar-panel,
-.donate-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 18px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
-}
-
-.sidebar-panel h3,
-.donate-card h3 {
-  margin-bottom: 14px;
-  font-size: 18px;
-}
-
-.category-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.category-btn {
-  width: 100%;
-  text-align: left;
-  padding: 11px 12px;
-  border-radius: 8px;
-  background: #f2f5fa;
-  color: #334155;
-  font-weight: 600;
-}
-
-.category-btn.active {
-  background: #dbeafe;
-  color: #1565c0;
-}
-
-.donate-card {
-  display: grid;
-  gap: 14px;
-  background: linear-gradient(180deg, #ffffff, #f7fee7);
-  border-color: #bbf7d0;
-}
-
-.donate-card h3 {
-  color: #166534;
-}
-
-.donate-card p {
-  color: #475569;
-  font-size: 14px;
-}
-
-.donate-qr {
-  width: 100%;
-  max-width: 180px;
-  aspect-ratio: 1;
-  justify-self: center;
-  padding: 10px;
-  border: 1px solid #dcfce7;
-  border-radius: 8px;
-  background: #fff;
-  object-fit: contain;
 }
 
 .content {
@@ -248,30 +202,6 @@ button {
   font-weight: 700;
   margin-bottom: 8px;
   line-height: 1.4;
-}
-
-.doc-desc {
-  font-size: 14px;
-  color: #64748b;
-  min-height: 42px;
-  margin-bottom: 12px;
-  line-height: 1.5;
-}
-
-.doc-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.doc-meta span {
-  background: #eff6ff;
-  color: #1565c0;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .doc-actions {
@@ -486,10 +416,9 @@ button {
 }
 
 .file-item-clicks {
-  margin-top: 4px;
-  color: #1565c0;
-  font-size: 12px;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
 }
 
 .file-item-actions {
@@ -555,12 +484,8 @@ button {
 
 .file-preview-count {
   margin-left: auto;
-  padding: 5px 9px;
-  border-radius: 999px;
-  background: #dbeafe;
-  color: #1565c0;
-  font-size: 12px;
-  font-weight: 800;
+  padding: 0;
+  background: transparent;
   white-space: nowrap;
 }
 
@@ -571,6 +496,39 @@ button {
   border: 0;
   background: #ffffff;
   flex: 1;
+}
+
+.file-preview-image-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 520px;
+  padding: 14px;
+  background: #ffffff;
+  flex: 1;
+}
+
+.file-preview-image {
+  display: block;
+  max-width: 100%;
+  max-height: clamp(480px, 58vh, 640px);
+  object-fit: contain;
+}
+
+.file-preview-video-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 520px;
+  padding: 14px;
+  background: #0f172a;
+  flex: 1;
+}
+
+.file-preview-video {
+  display: block;
+  width: 100%;
+  max-height: clamp(480px, 58vh, 640px);
 }
 
 .file-preview-empty {

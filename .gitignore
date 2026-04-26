@@ -1,2 +1,2 @@
-api/db.local.php
 .env
+data/device-sessions.json

@@ -778,6 +778,14 @@ function downloadFile(path) {
   link.remove();
 }
 
+function isMobileViewport() {
+  if (window.matchMedia) {
+    return window.matchMedia("(max-width: 768px)").matches;
+  }
+
+  return window.innerWidth <= 768;
+}
+
 function getCountKey(value) {
   return String(value)
     .toLowerCase()
@@ -1323,6 +1331,22 @@ function renderWordOpenStarted(file) {
   `;
 }
 
+function renderWordMobileDownloadBlocked(file) {
+  const safeName = escapeHtml(file.name);
+  const encodedPath = escapeHtml(getEncodedFilePath(file.path));
+  const visitorCount = renderVisitorLoadingText();
+
+  return `
+    <div class="file-preview-empty">
+      <div class="file-preview-empty-icon">${getFileIcon(file.path)}</div>
+      <h4>${safeName}</h4>
+      <span class="file-preview-count">${visitorCount}</span>
+      <p>Trên điện thoại đã tắt tự động tải file Word. Bấm nút bên dưới nếu muốn tải.</p>
+      <a class="mini-btn primary" href="${encodedPath}" download>Tải file Word</a>
+    </div>
+  `;
+}
+
 async function selectPreviewFile(docId, fileIndex, event) {
   if (event) {
     event.stopPropagation();
@@ -1373,6 +1397,19 @@ async function openFileFromList(docId, fileIndex, event) {
   }
 
   if (isWordFile(extension)) {
+    if (isMobileViewport()) {
+      if (isDocxFile(extension)) {
+        previewPanel.innerHTML = renderFilePreview(file);
+        recordFileVisit(file, fileIndex);
+        hydrateDocxPreview(file);
+        return;
+      }
+
+      previewPanel.innerHTML = renderWordMobileDownloadBlocked(file);
+      recordFileVisit(file, fileIndex);
+      return;
+    }
+
     downloadFile(file.path);
     previewPanel.innerHTML = renderWordOpenStarted(file);
     recordFileVisit(file, fileIndex);

@@ -46,6 +46,10 @@
     height: 480px;
   }
 
+  .word-preview {
+    min-height: 480px;
+  }
+
   .file-preview-panel,
   .file-preview-empty {
     min-height: 480px;

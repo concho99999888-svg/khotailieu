@@ -498,6 +498,51 @@ button {
   flex: 1;
 }
 
+.word-preview {
+  flex: 1;
+  min-height: 520px;
+  padding: 28px;
+  overflow: auto;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.word-preview p,
+.word-preview ul,
+.word-preview ol,
+.word-preview table {
+  margin-bottom: 12px;
+}
+
+.word-preview table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.word-preview th,
+.word-preview td {
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+  vertical-align: top;
+}
+
+.word-preview img {
+  max-width: 100%;
+  height: auto;
+}
+
+.word-preview-loading,
+.word-preview-error {
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  text-align: center;
+}
+
 .file-preview-image-wrap {
   display: flex;
   align-items: center;

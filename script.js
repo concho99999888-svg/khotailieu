@@ -479,6 +479,22 @@ function isVideoFile(extension) {
   return ["mp4", "webm", "mov"].includes(extension);
 }
 
+function isDocxFile(extension) {
+  return extension === "docx";
+}
+
+function isWordFile(extension) {
+  return ["doc", "docx"].includes(extension);
+}
+
+function isUnsupportedOfficeFile(extension) {
+  return ["doc", "xls", "xlsx", "ppt", "pptx"].includes(extension);
+}
+
+function getEncodedFilePath(path) {
+  return encodeURI(path);
+}
+
 function getCountKey(value) {
   return String(value)
     .toLowerCase()
@@ -878,6 +894,7 @@ function openPreview(id, selectedIndex) {
   modalDesc.dataset.docId = String(doc.id);
   modal.classList.add("show");
   syncPreviewCounts(doc);
+  hydrateDocxPreview(doc.files[activeIndex]);
 }
 
 async function syncPreviewCounts(doc) {
@@ -888,7 +905,7 @@ async function syncPreviewCounts(doc) {
 
 function renderFilePreview(file) {
   const extension = getFileExtension(file.path);
-  const encodedPath = escapeHtml(encodeURI(file.path));
+  const encodedPath = escapeHtml(getEncodedFilePath(file.path));
   const safeName = escapeHtml(file.name);
   const visitorCount = renderVisitorLoadingText();
 
@@ -929,14 +946,68 @@ function renderFilePreview(file) {
     `;
   }
 
+  if (isDocxFile(extension)) {
+    return `
+      <div class="file-preview-head">
+        <span>${getFileIcon(file.path)}</span>
+        <strong>${safeName}</strong>
+        <span class="file-preview-count">${visitorCount}</span>
+      </div>
+      <div class="word-preview" data-docx-src="${encodedPath}">
+        <div class="word-preview-loading">Đang mở file Word...</div>
+      </div>
+    `;
+  }
+
+  if (isUnsupportedOfficeFile(extension)) {
+    return `
+      <div class="file-preview-empty">
+        <div class="file-preview-empty-icon">${getFileIcon(file.path)}</div>
+        <h4>${safeName}</h4>
+        <span class="file-preview-count">${visitorCount}</span>
+        <p>Định dạng này không xem trước trực tiếp được trên trình duyệt.</p>
+      </div>
+    `;
+  }
+
   return `
     <div class="file-preview-empty">
       <div class="file-preview-empty-icon">${getFileIcon(file.path)}</div>
       <h4>${safeName}</h4>
       <span class="file-preview-count">${visitorCount}</span>
-      <p>File này chưa hỗ trợ xem trước trực tiếp trên trình duyệt nên đã chặn mở link để tránh tự động tải về.</p>
+      <p>Không xem trước được định dạng này trên trình duyệt.</p>
     </div>
   `;
+}
+
+async function hydrateDocxPreview(file) {
+  const extension = getFileExtension(file.path);
+
+  if (!isDocxFile(extension)) return;
+
+  const previewPanel = modalDesc.querySelector(".file-preview-panel");
+  const previewBody = previewPanel?.querySelector(".word-preview");
+
+  if (!previewBody) return;
+
+  if (!window.mammoth) {
+    previewBody.innerHTML = "<div class=\"word-preview-error\">Không tải được bộ đọc file Word.</div>";
+    return;
+  }
+
+  try {
+    const response = await fetch(getEncodedFilePath(file.path));
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const result = await window.mammoth.convertToHtml({ arrayBuffer });
+    previewBody.innerHTML = result.value || "<div class=\"word-preview-error\">File Word không có nội dung xem trước.</div>";
+  } catch (error) {
+    previewBody.innerHTML = "<div class=\"word-preview-error\">Không đọc được file Word này.</div>";
+  }
 }
 
 function renderFileOpenBlocked(file) {
@@ -948,7 +1019,23 @@ function renderFileOpenBlocked(file) {
       <div class="file-preview-empty-icon">${getFileIcon(file.path)}</div>
       <h4>${safeName}</h4>
       <span class="file-preview-count">${visitorCount}</span>
-      <p>File này không mở trực tiếp trong trình duyệt. Mình đã chặn thao tác này để tránh tự động tải về.</p>
+      <p>Định dạng này không mở trực tiếp trên trình duyệt nên đã chặn tự động tải về.</p>
+    </div>
+  `;
+}
+
+function renderWordOpenStarted(file) {
+  const safeName = escapeHtml(file.name);
+  const encodedPath = escapeHtml(getEncodedFilePath(file.path));
+  const visitorCount = renderVisitorLoadingText();
+
+  return `
+    <div class="file-preview-empty">
+      <div class="file-preview-empty-icon">${getFileIcon(file.path)}</div>
+      <h4>${safeName}</h4>
+      <span class="file-preview-count">${visitorCount}</span>
+      <p>File Word đang được mở hoặc tải về để xem trên máy.</p>
+      <a class="mini-btn primary" href="${encodedPath}" target="_blank" rel="noopener">Mở lại file</a>
     </div>
   `;
 }
@@ -970,6 +1057,7 @@ async function selectPreviewFile(docId, fileIndex, event) {
   refreshVisibleFileCount(file, fileIndex, {
     readOnly: true
   });
+  hydrateDocxPreview(file);
 }
 
 async function openFileFromList(docId, fileIndex, event) {
@@ -984,17 +1072,30 @@ async function openFileFromList(docId, fileIndex, event) {
   if (!file || !previewPanel) return;
 
   const extension = getFileExtension(file.path);
-  const canOpenInline = extension === "pdf" || isImageFile(extension) || isVideoFile(extension);
-  const popup = canOpenInline ? window.open(encodeURI(file.path), "_blank") : null;
+  const canPreviewInline = extension === "pdf" || isImageFile(extension) || isVideoFile(extension);
+  const targetUrl = getEncodedFilePath(file.path);
 
   modalDesc.querySelectorAll(".file-item").forEach(item => item.classList.remove("active"));
   modalDesc.querySelector(`[data-preview-item="${fileIndex}"]`)?.classList.add("active");
 
-  if (canOpenInline) {
+  if (canPreviewInline) {
+    const popup = window.open(targetUrl, "_blank");
+
     previewPanel.innerHTML = renderFilePreview(file);
     recordFileVisit(file, fileIndex);
     if (!popup) {
-      window.open(encodeURI(file.path), "_blank");
+      window.open(targetUrl, "_blank");
+    }
+    return;
+  }
+
+  if (isWordFile(extension)) {
+    const popup = window.open(targetUrl, "_blank");
+
+    previewPanel.innerHTML = renderWordOpenStarted(file);
+    recordFileVisit(file, fileIndex);
+    if (!popup) {
+      window.open(targetUrl, "_blank");
     }
     return;
   }

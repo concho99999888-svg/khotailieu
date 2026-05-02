@@ -162,9 +162,29 @@ Tra ve log cac link/file da duoc bam gan nhat. Co the gioi han:
 ## Dua len GitHub
 
 ```bash
-git add .gitignore .env.example README.md index.html package.json package-lock.json server/index.js script.js
+git add .gitignore .env.example README.md index.html package.json package-lock.json render.yaml server/index.js script.js
 git commit -m "Add MongoDB backend"
 git push origin master
 ```
 
 Khong commit file `.env` vi co thong tin rieng.
+
+## Deploy Render
+
+Repo co san `render.yaml` de tao Render Blueprint.
+
+1. Vao Render, chon New -> Blueprint.
+2. Chon repository GitHub nay.
+3. Khi Render hoi env `MONGODB_URI`, nhap URI MongoDB Atlas moi.
+4. Deploy.
+
+Render se dung:
+
+```text
+Build command: npm install
+Start command: npm start
+Health check: /api/health
+Region: singapore
+```
+
+Khong dua `MONGODB_URI` vao GitHub. Nen doi password MongoDB Atlas truoc khi deploy public.

@@ -688,10 +688,8 @@ documents.push(
   ])
 );
 
-const visitorCountBaseUrl = "https://visitor-badge.one9x.com/count";
-const visitorBadgeBaseUrl = "https://visitor-badge.one9x.com/badge";
-const visitorBadgeNamespace = "ktlvinh";
-const visitorBadgeTimeframe = 86400;
+const visitorStatsApiUrl = "api/file-clicks";
+const visitorRequestTimeout = 3000;
 const itemsPerPage = 6;
 let currentPage = 1;
 let currentKeyword = "";
@@ -708,6 +706,7 @@ const modalIcon = document.getElementById("modalIcon");
 const modalTitle = document.getElementById("modalTitle");
 const modalDesc = document.getElementById("modalDesc");
 const modalSize = document.getElementById("modalSize");
+let cachedLocationPayload = null;
 
 function normalizeText(value) {
   return String(value)
@@ -786,62 +785,6 @@ function isMobileViewport() {
   return window.innerWidth <= 768;
 }
 
-function getCountKey(value) {
-  return String(value)
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 90) || "unknown";
-}
-
-function getFileCounterKey(file) {
-  return `file-${getCountKey(file.path)}`;
-}
-
-function getVisitorCountUrl(key, options = {}) {
-  const params = new URLSearchParams({
-    page_id: key,
-    namespace: visitorBadgeNamespace,
-    _: String(Date.now())
-  });
-
-  if (options.readOnly) {
-    params.set("read", "true");
-  }
-
-  if (options.unique) {
-    params.set("unique", "true");
-    params.set("timeframe", String(visitorBadgeTimeframe));
-  }
-
-  return `${visitorCountBaseUrl}?${params.toString()}`;
-}
-
-function getVisitorBadgeUrl(key, options = {}) {
-  const params = new URLSearchParams({
-    page_id: key,
-    namespace: visitorBadgeNamespace,
-    left_text: options.label || "luot",
-    left_color: "#e8edf5",
-    right_color: "#1565c0",
-    _: String(Date.now())
-  });
-
-  if (options.readOnly) {
-    params.set("read", "true");
-  }
-
-  if (options.unique) {
-    params.set("unique", "true");
-    params.set("timeframe", String(visitorBadgeTimeframe));
-  }
-
-  return `${visitorBadgeBaseUrl}?${params.toString()}`;
-}
-
 function formatVisitorCount(value, unit = "lượt") {
   const count = Number(value);
   const safeCount = Number.isFinite(count) && count >= 0 ? Math.floor(count) : 0;
@@ -857,21 +800,39 @@ function renderVisitorLoadingText(options = {}) {
   return `<span class="visitor-count is-loading">${escapeHtml(options.text || "Đang tải lượt...")}</span>`;
 }
 
-function renderVisitorBadge(key, options = {}) {
-  const label = options.label || "luot";
-  const src = getVisitorBadgeUrl(key, options);
-
-  return `<img class="visitor-badge" src="${escapeHtml(src)}" alt="${escapeHtml(label)}" loading="lazy" referrerpolicy="no-referrer">`;
+function getSafeCount(value) {
+  const count = Number(value);
+  return Number.isFinite(count) && count >= 0 ? Math.floor(count) : 0;
 }
 
-async function fetchVisitorCount(key, options = {}) {
+function getFileVisitCount(stats, file) {
+  return getSafeCount(
+    stats?.fileVisitors?.[file.path] ??
+    stats?.clicks?.[file.path] ??
+    0
+  );
+}
+
+async function requestVisitorStats(options = {}) {
+  if (window.location.protocol === "file:") {
+    throw new Error("Visitor backend requires a web server");
+  }
+
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), 3000);
+  const timeoutId = window.setTimeout(() => controller.abort(), visitorRequestTimeout);
   let response;
 
   try {
-    response = await fetch(getVisitorCountUrl(key, options), {
+    response = await fetch(visitorStatsApiUrl, {
+      method: options.method || "GET",
       cache: "no-store",
+      headers: options.body ? {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      } : {
+        "Accept": "application/json"
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined,
       signal: controller.signal
     });
   } finally {
@@ -879,17 +840,26 @@ async function fetchVisitorCount(key, options = {}) {
   }
 
   if (!response.ok) {
-    throw new Error("Cannot load visitor count");
+    throw new Error("Cannot load visitor stats");
   }
 
-  const data = await response.json();
-  const count = Number(data.value);
+  return response.json();
+}
 
-  if (!Number.isFinite(count)) {
-    throw new Error("Invalid visitor count");
-  }
+function readVisitorStats() {
+  return requestVisitorStats();
+}
 
-  return count;
+function recordVisitor(type, file = "", extra = {}) {
+  return requestVisitorStats({
+    method: "POST",
+    body: {
+      type,
+      file,
+      ...extra,
+      ...(cachedLocationPayload || {})
+    }
+  });
 }
 
 async function updateSiteVisitorCount() {
@@ -900,16 +870,13 @@ async function updateSiteVisitorCount() {
   });
 
   try {
-    const count = await fetchVisitorCount("site", {
-      unique: true
-    });
-    siteVisitorCount.innerHTML = renderVisitorCount(count, {
+    const stats = await recordVisitor("site");
+    siteVisitorCount.innerHTML = renderVisitorCount(getSafeCount(stats.siteVisitors ?? stats.count), {
       unit: "lượt truy cập"
     });
   } catch (error) {
-    siteVisitorCount.innerHTML = renderVisitorBadge("site", {
-      label: "tổng lượt truy cập ",
-      unique: true
+    siteVisitorCount.innerHTML = renderVisitorCount(0, {
+      unit: "lượt truy cập"
     });
   }
 }
@@ -977,6 +944,8 @@ function detectBrowser(userAgent) {
 }
 
 function detectDeviceName(userAgent, platform) {
+  const androidModel = detectAndroidModel(userAgent);
+  if (androidModel) return androidModel;
   if (/iphone/i.test(userAgent)) return "iPhone";
   if (/ipad/i.test(userAgent) || (platform === "MacIntel" && navigator.maxTouchPoints > 1)) return "iPad";
   if (/android/i.test(userAgent) && /mobile/i.test(userAgent)) return "Android Phone";
@@ -987,37 +956,167 @@ function detectDeviceName(userAgent, platform) {
   return "Thiết bị không rõ";
 }
 
-async function registerDeviceSession() {
-  if (window.location.protocol === "file:") {
-    return;
+function detectAndroidModel(userAgent) {
+  const match = userAgent.match(/Android [^;)]*;\s*([^;)]+?)\s+Build\//i);
+  const model = match?.[1]?.trim();
+
+  if (!model || /wv|mobile|version/i.test(model)) {
+    return "";
   }
 
+  return model;
+}
+
+function getScreenSummary() {
+  const width = window.screen?.width || 0;
+  const height = window.screen?.height || 0;
+  const ratio = window.devicePixelRatio || 1;
+
+  if (!width || !height) {
+    return "";
+  }
+
+  return `${width}x${height}@${Number(ratio.toFixed(2))}x`;
+}
+
+function getViewportSummary() {
+  return `${window.innerWidth || 0}x${window.innerHeight || 0}`;
+}
+
+function getDeviceLabel(userAgent, platform) {
+  const name = detectDeviceName(userAgent, platform);
+  const browser = detectBrowser(userAgent);
+  const os = detectOperatingSystem(userAgent, platform);
+  const screen = getScreenSummary();
+
+  return [name, os, browser, screen].filter(Boolean).join(" | ");
+}
+
+function getMapUrl(latitude, longitude) {
+  return `https://www.google.com/maps?q=${latitude},${longitude}`;
+}
+
+function buildLocationPayload(position) {
+  const latitude = Number(position.coords.latitude.toFixed(6));
+  const longitude = Number(position.coords.longitude.toFixed(6));
+  const accuracy = Math.round(position.coords.accuracy || 0);
+  const addressText = `Tọa độ ${latitude}, ${longitude}${accuracy ? ` (±${accuracy}m)` : ""}`;
+
+  return {
+    address: addressText,
+    addressText,
+    latitude,
+    longitude,
+    accuracy,
+    mapUrl: getMapUrl(latitude, longitude),
+    locationSource: "browser_geolocation"
+  };
+}
+
+function requestBrowserLocation() {
+  const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+
+  if (!navigator.geolocation || (!window.isSecureContext && !isLocalhost)) {
+    return Promise.resolve(null);
+  }
+
+  return new Promise(resolve => {
+    navigator.geolocation.getCurrentPosition(
+      position => resolve(buildLocationPayload(position)),
+      () => resolve(null),
+      {
+        enableHighAccuracy: false,
+        maximumAge: 10 * 60 * 1000,
+        timeout: 7000
+      }
+    );
+  });
+}
+
+async function syncBrowserLocation() {
+  const locationPayload = await requestBrowserLocation();
+
+  if (!locationPayload) {
+    return null;
+  }
+
+  cachedLocationPayload = locationPayload;
+  await sendDeviceSession(locationPayload);
+
+  return locationPayload;
+}
+
+function getDeviceSessionPayload(extra = {}) {
   const userAgent = navigator.userAgent || "";
   const platform = navigator.platform || "";
-  const payload = {
+  const deviceName = detectDeviceName(userAgent, platform);
+
+  return {
     sessionId: getDeviceSessionId(),
     user: getStoredValue("ktlUser") || "guest",
-    deviceName: detectDeviceName(userAgent, platform),
+    deviceName,
+    deviceLabel: getDeviceLabel(userAgent, platform),
     os: detectOperatingSystem(userAgent, platform),
     browser: detectBrowser(userAgent),
+    platform,
+    screen: getScreenSummary(),
+    viewport: getViewportSummary(),
+    deviceMemory: navigator.deviceMemory || "",
+    cpuCores: navigator.hardwareConcurrency || "",
     userAgent,
     language: navigator.language || "",
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || ""
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+    pageUrl: window.location.href,
+    referrer: document.referrer || "",
+    ...(cachedLocationPayload || {}),
+    ...extra
   };
+}
 
-  try {
-    await fetch("api/device-sessions.php", {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-  } catch (error) {
-    // The site may be opened as static files; device tracking needs PHP.
+function sendDeviceSession(extra = {}, options = {}) {
+  if (window.location.protocol === "file:") {
+    return Promise.resolve();
   }
+
+  const payload = getDeviceSessionPayload(extra);
+  const body = JSON.stringify(payload);
+
+  if (options.keepalive && navigator.sendBeacon) {
+    const sent = navigator.sendBeacon(
+      "api/device-sessions",
+      new Blob([body], { type: "application/json" })
+    );
+
+    if (sent) {
+      return Promise.resolve();
+    }
+  }
+
+  return fetch("api/device-sessions", {
+    method: "POST",
+    cache: "no-store",
+    keepalive: Boolean(options.keepalive),
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    body
+  }).catch(() => {
+    // The site may be opened as static files; device tracking needs the backend.
+  });
+}
+
+function registerDeviceSession() {
+  const sessionRequest = sendDeviceSession();
+  syncBrowserLocation();
+
+  return sessionRequest;
+}
+
+function trackDeviceClick(eventData) {
+  return sendDeviceSession(eventData, {
+    keepalive: true
+  });
 }
 
 function getFileCountElements(fileIndex) {
@@ -1047,17 +1146,26 @@ async function refreshVisibleFileCount(file, fileIndex, options = {}) {
   updateFileCountElements(fileIndex, renderVisitorLoadingText());
 
   try {
-    const count = await fetchVisitorCount(getFileCounterKey(file), options);
-    updateFileCountElements(fileIndex, renderVisitorCount(count));
+    const stats = options.readOnly
+      ? await readVisitorStats()
+      : await recordVisitor("file", file.path, {
+        fileName: file.name
+      });
+    updateFileCountElements(fileIndex, renderVisitorCount(getFileVisitCount(stats, file)));
   } catch (error) {
-    updateFileCountElements(fileIndex, renderVisitorBadge(getFileCounterKey(file), {
-      ...options,
-      label: "tổng lượt xem file "
-    }));
+    updateFileCountElements(fileIndex, renderVisitorCount(0));
   }
 }
 
 function recordFileVisit(file, fileIndex) {
+  trackDeviceClick({
+    eventType: "file_open",
+    targetUrl: new URL(getEncodedFilePath(file.path), window.location.href).href,
+    targetText: file.name,
+    fileName: file.name,
+    filePath: file.path
+  });
+
   refreshVisibleFileCount(file, fileIndex, {
     unique: true
   });
@@ -1441,6 +1549,20 @@ searchInput.addEventListener("input", event => {
   currentPage = 1;
   renderDocuments();
 });
+
+document.addEventListener("click", event => {
+  const clickedElement = event.target instanceof Element ? event.target : event.target?.parentElement;
+  const link = clickedElement?.closest("a[href]");
+
+  if (!link) return;
+
+  trackDeviceClick({
+    eventType: "link_click",
+    targetUrl: link.href,
+    targetText: link.textContent || link.getAttribute("aria-label") || "",
+    filePath: link.getAttribute("href") || ""
+  });
+}, true);
 
 async function initApp() {
   renderDocuments();

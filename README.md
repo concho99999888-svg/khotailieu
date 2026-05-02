@@ -1,86 +1,170 @@
 # Kho Tai Lieu
 
-Website kho tai lieu HTML/CSS/JS. Bo dem truy cap cong khai dung API JSON cua visitor-badge, khong can PHP/MySQL.
+Website kho tai lieu HTML/CSS/JS co backend Node.js + MongoDB de luu:
+
+- Luot truy cap website theo visitor duy nhat.
+- Luot xem tung file theo visitor duy nhat.
+- Phien thiet bi truy cap website.
+
+## Chuan bi
+
+Can cai san:
+
+- Node.js 20 tro len.
+- MongoDB local, hoac MongoDB Atlas URI.
+
+Tao file `.env` tu `.env.example`:
+
+```bash
+copy .env.example .env
+```
+
+Sua `MONGODB_URI` neu ban dung MongoDB Atlas.
+
+## Cai dependency
+
+```bash
+npm install
+```
 
 ## Chay local
 
-Mo truc tiep file:
-
-```text
-index.html
-```
-
-Hoac chay server tinh bat ky.
-
-Neu dung trang admin thiet bi that, can chay qua PHP:
-
 ```bash
-php -S 127.0.0.1:8000 -t .
+npm run dev
 ```
 
 Mo:
 
 ```text
-http://127.0.0.1:8000/index.html
-http://127.0.0.1:8000/admin.html
+http://127.0.0.1:3000
 ```
 
-## Dua len GitHub Pages
+Mo bang dien thoai cung Wi-Fi:
 
-Vi project nay khong con dung PHP/MySQL, co the deploy len GitHub Pages.
-
-1. Day code len GitHub:
+1. Xem IPv4 tren laptop:
 
 ```bash
-git init
-git add .
-git commit -m "Use visitor badge counter"
-git branch -M main
-git remote add origin https://github.com/USERNAME/REPO.git
-git push -u origin main
+ipconfig
 ```
 
-2. Vao repository tren GitHub:
+2. Mo tren dien thoai bang IP laptop, vi du:
 
 ```text
-Settings -> Pages
+http://192.168.1.25:3000
 ```
 
-3. Chon:
+Neu khong vao duoc, cho phep Node.js qua Windows Firewall hoac doi Wi-Fi sang cung mang.
+
+Kiem tra backend:
 
 ```text
-Deploy from a branch
-Branch: main
-Folder: /root
+http://127.0.0.1:3000/api/health
+http://127.0.0.1:3000/api/file-clicks
+http://127.0.0.1:3000/api/device-sessions
 ```
 
-4. Mo link GitHub Pages GitHub cap.
+## Cau hinh MongoDB
 
-## Bo dem truy cap
-
-Bo dem dung endpoint count cua visitor-badge.one9x.com:
+Mac dinh app dung:
 
 ```text
-https://visitor-badge.one9x.com/count
+mongodb://127.0.0.1:27017
+database: kho_tai_lieu
 ```
 
-- Vao web: tang counter `site`.
-- Xem/mo file: tang counter rieng cua file.
-- So dem la cong khai va moi nguoi cung thay.
-- Bo dem duoc hien bang chu truc tiep, khong dung anh SVG/badge.
-
-Luu y: tuy chon `unique=true` cua dich vu nay co chan trung theo mot khoang thoi gian, nhung neu can chinh xac tuyet doi "cung IP khong cong don", can dung backend rieng nhu PHP/MySQL.
-
-## Them tai lieu
-
-1. Cho file vao thu muc:
+Neu deploy len Render/Railway/VPS, dat bien moi truong:
 
 ```text
-files/
+MONGODB_URI=<mongo-uri-cua-ban>
+MONGODB_DB=kho_tai_lieu
+VISITOR_HASH_SALT=<chuoi-bi-mat>
 ```
 
-2. Them entry vao mang `documents` trong:
+## API
+
+`GET /api/file-clicks`
+
+Tra ve tong luot truy cap va luot xem file.
+
+Trong do:
 
 ```text
-script.js
+siteVisitors / siteVisits: tong so lan vao web
+fileVisitors / fileVisits: tong so lan mo tung file
+uniqueSiteVisitors: so visitor web khong trung theo IP
+uniqueFileVisitors: so visitor tung file khong trung theo IP
+recentFileVisits: 50 luot mo file gan nhat, gom ten file va thoi gian cu the
 ```
+
+Moi ban ghi trong `site_visits`, `file_visits`, `device_sessions`, `device_events` deu co them ngay gio:
+
+```text
+date
+time
+dateTime
+createdAt / createdAtMs
+```
+
+Voi luot mo file, ban ghi trong `file_visits` co them:
+
+```text
+fileName
+filePath
+date
+time
+dateTime
+```
+
+Neu trinh duyet cho phep chia se vi tri, backend se luu them dia chi/ban do:
+
+```text
+address
+addressText
+latitude
+longitude
+accuracy
+mapUrl
+locationSource
+```
+
+Luu y: vi tri trinh duyet chi hoat dong khi nguoi dung bam cho phep va trang chay tren HTTPS hoac localhost. Khi mo bang IP LAN `http://192.168.x.x:3000`, nhieu trinh duyet se chan lay vi tri.
+
+`POST /api/file-clicks`
+
+Body:
+
+```json
+{ "type": "site" }
+```
+
+Hoac:
+
+```json
+{ "type": "file", "file": "files/triet.pdf" }
+```
+
+`GET /api/device-sessions`
+
+Tra ve danh sach thiet bi.
+
+`POST /api/device-sessions`
+
+Frontend tu dong goi API nay khi nguoi dung vao web va khi nguoi dung bam link/file.
+
+`GET /api/device-events`
+
+Tra ve log cac link/file da duoc bam gan nhat. Co the gioi han:
+
+```text
+/api/device-events?limit=50
+```
+
+## Dua len GitHub
+
+```bash
+git add .gitignore .env.example README.md index.html package.json package-lock.json server/index.js script.js
+git commit -m "Add MongoDB backend"
+git push origin master
+```
+
+Khong commit file `.env` vi co thong tin rieng.
